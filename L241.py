@@ -22,16 +22,16 @@ from hashlib import sha512
 from scipy.integrate import odeint
 import argparse
 #====================================================================
-# Получение параметров командной строки
+# Getting command line options
 #====================================================================
 def param():
     parser = argparse.ArgumentParser(
-    prog='L240.py',
+    prog='L241.py',
     description='Vernam cipher. The novelty of the proposed solution concerns ' \
                 'a way to generate one-time pads, why ' \
                 'the coordinates of the trajectory of the Lorenz attractor are used' \
                 'at a considerable distance from its starting point.',
-    epilog='(c) Author: Botnev A.V. <abotnev00@gmail.com> 12.08.2016'
+    epilog='(c) Author: Botnev.A.V. <abotnev00@gmail.com> 08.12.2016'
     )
 
     parser.add_argument('-f','--fname', nargs='?', default='text0.txt')
@@ -39,36 +39,36 @@ def param():
     return args.fname
 
 #====================================================================
-# Коэффициенты уравнений Лореца для получения класического аттрактора
+# Coefficients of the Lorentz equations for obtaining a classical attractor
 #====================================================================
 s,r,b=10,28,8/3
 #====================================================================
-# Количество точек траектории до начала координат используемых
-# в качестве одноразового блокнота
+# Number of trajectory points to the origin used
+# as a one-time notepad
 #====================================================================
 coutn_iter = 5001
 #====================================================================
-# Шифрование (дешифрование) a xor b Шифр Вернама
+# Encryption (decryption) a xor b Vernam cipher
 #====================================================================
 def encrypt1(var, key):
     return  [a ^ ord(b) for (a,b) in zip(var, key)]
 #====================================================================
-# Система ОДУ Лоренца для вычистения аттрактора
+# Lorenz ODE system for attractor cleaning
 #====================================================================
 def f(y, t):
    # x   y   z
     y1, y2, y3 = y
     return [s*(y2-y1), -y2+(r-y3)*y1, -b*y3+y1*y2]
 #====================================================================
-# Решаем систему ОДУ вычисляем ее фазовую траекторию
-# Начальное значение например
+# We solve the ODE system and calculate its phase trajectory
+# Initial value for example
 # x =  1.0000000000000001,
 # y = -1.0000000000000001,
 # z = 10.0000000000000001
-# Количество шагов для получения достаточного разброса точек
+# Number of steps to get enough point spread
 # n=5001
-# a0 = [x, y, z] решение ОДУ (координаты траектории на их основе
-# динамически создается одноразовый блокнот)
+# a0 = [x, y, z] ODE solution (trajectory coordinates based on them
+# one-time notepad is dynamically created)
 #====================================================================
 def lorenz(x,y,z,n):
     t = np.linspace(0,50,n)
@@ -76,7 +76,7 @@ def lorenz(x,y,z,n):
     a0 = odeint(f, y0, t, full_output=False).T
     return a0
 #====================================================================
-#         Получаем очередную строку шифроблокнота 128 байт
+#        We get the next line of the cipher pad 128 bytes
 #====================================================================
 def m_read(a0,nzap):
     if len(a0[0]) >= nzap:
@@ -87,20 +87,20 @@ def m_read(a0,nzap):
         return line1
     return [1]
 #====================================================================
-# Вычисляем размер одноразового блокнота, где 128 - длина в байтах
-# хеша вычисленного по алгоритму sha512. Основой для вычисления хеша
-# являются координата траектории аттрактора. При этом, размер файла
-# в байтах до шифрования и после равны.
+# Calculate the size of the one-time pad, where 128 is the length in bytes
+# hash calculated using the sha512 algorithm. Basis for hash calculation
+# are the coordinates of the attractor's trajectory. However, the file size
+# in bytes before encryption and after are equal.
 ### print(sha256(bytes([1, 2, 3])).hexdigest())
 ### print(sha512(bytes([1, 2, 3])).hexdigest())
 #====================================================================
 def file_crypt(fpath):
-    siz = os.path.getsize(fpath) # размер файла в байтах.
-    key = math.ceil(siz/128)     # количество точек используемых для
-    return key                   # получения шифроблокнота
-                                 # (округление в большую сторону)
+    siz = os.path.getsize(fpath) # file size in bytes.
+    key = math.ceil(siz/128)     # number of points used for
+    return key                   # getting a cipher pad
+                                 # (rounding up)
 #====================================================================
-#                 Шифрование главная процедура
+#                Encryption main procedure
 #====================================================================
 def crypt(f1,f2):
     file1 = open(f1,'rb')
@@ -116,45 +116,45 @@ def crypt(f1,f2):
     file2.close()
     file1.close()
 #====================================================================
-#        Проверка существования и удаление тестовых файлов
+#        Existence Check and Deletion of Test Files
 #====================================================================
 def fexists(f):
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)), f)
     if os.path.exists(path):
         os.remove(path)
 #====================================================================
-#             Удаляем тестовые файлы если они есть
+#             Delete test files if any
 #====================================================================
 fexists(f='encrypted.txt')
 fexists(f='decrypted.txt')
 #====================================================================
-#              Получение параметров командной строки
+#            Getting command line options
 #====================================================================
 fname = param()
 #====================================================================
-#    Вычисляем длину одноразового блокнота для шифруемого файла
+#    Calculate the length of the one-time pad for the encrypted file
 #====================================================================
 keylen = file_crypt(fpath=fname) #'text0.txt')
 #====================================================================
-# Вычисляем траекторию (с учетом длины одноразового блокнота)
+# Calculate the trajectory (taking into account the length of the one-time pad)
 #====================================================================
 zap = lorenz(x =  1.0012400000000001, \
              y = -1.0000000010000001, \
              z = 10.0000000000000101, \
              n = coutn_iter+keylen)
 #====================================================================
-#                 Шифрование одноразовым блокнотом
+#                 One-time pad encryption
 #====================================================================
 crypt(f1 = fname,    f2 = 'encrypted.txt')
 #====================================================================
-#               Расшифровывание одноразовым блокнотом
+#               Decryption with a one-time pad
 #====================================================================
 crypt(f1 = 'encrypted.txt',f2 = 'decrypted.txt')
 #====================================================================
-# Помним
+# Remember
 # coutn_iter = 5001
 # x=  1.0012400000000001
 # y= -1.0000000010000001
 # z= 10.0000000000000101
-# и файл зашифрованный этим шифроблокнотом (encrypted.txt)
+# and the file encrypted with this cipher pad (encrypted.txt)
 #====================================================================
