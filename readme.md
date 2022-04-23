@@ -15,3 +15,7 @@
   When developing a regular algorithm, the choice of coordinates for the formation
   the cipher pad can be arbitrarily complicated, for example by using
   multiple trajectories.
+
+  Command line options:
+  -f text0.txt
+  -f encrypted.txt -k key.txt
